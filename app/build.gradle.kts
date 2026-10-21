@@ -7,6 +7,8 @@ android {
     namespace = "com.group4.notesapp"
     compileSdk {
         version = release(36)
+
+        buildFeatures { viewBinding = true }
     }
 
     defaultConfig {

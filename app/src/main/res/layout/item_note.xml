@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/noteCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    tools:background="#338EC5C9">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <TextView
+            android:id="@+id/tvNoteTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="26dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            tools:text="Weekend trip" />
+
+        <TextView
+            android:id="@+id/tvNoteContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="4"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            tools:text="Book the train to Kandy, pack the camera, and check the weather before leaving." />
+
+        <TextView
+            android:id="@+id/tvNoteDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="end"
+            android:textColor="@color/text_muted"
+            android:textSize="11sp"
+            tools:text="Wed, 5:24 PM" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/ivPin"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="12dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_pin"
+        android:visibility="gone"
+        app:tint="@color/text_secondary" />
+
+    <ImageView
+        android:id="@+id/ivBadge"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="10dp"
+        android:alpha="0"
+        android:background="@drawable/bg_badge"
+        android:importantForAccessibility="no"
+        android:padding="4dp"
+        android:src="@drawable/ic_check"
+        app:tint="#111111" />
+
+</FrameLayout>
