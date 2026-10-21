@@ -91,6 +91,18 @@ class EditNoteActivity : AppCompatActivity() {
                 loaded = true
             }
         }
+
+        if (savedInstanceState == null) {
+            val rise = dp(24).toFloat()
+            binding.editorCard.alpha = 0f
+            binding.editorCard.translationY = rise
+            binding.editorCard.animate().alpha(1f).translationY(0f).setDuration(350).start()
+
+            binding.colorRow.alpha = 0f
+            binding.colorRow.translationY = rise
+            binding.colorRow.animate().alpha(1f).translationY(0f)
+                .setStartDelay(120).setDuration(350).start()
+        }
     }
 
     private fun buildColorRow() {

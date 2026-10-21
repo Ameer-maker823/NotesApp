@@ -24,6 +24,10 @@ import com.google.android.material.snackbar.Snackbar
 import com.group4.notesapp.data.Note
 import com.group4.notesapp.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
+import android.view.animation.AnimationUtils
+import android.view.animation.OvershootInterpolator
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,6 +40,7 @@ class MainActivity : AppCompatActivity() {
 
     private var selectionShown: Boolean? = null
     private var searchShown: Boolean? = null
+    private var listEntered = false
 
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
@@ -79,6 +84,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.rvNotes.adapter = adapter
+        binding.rvNotes.layoutAnimation =
+            AnimationUtils.loadLayoutAnimation(this, R.anim.layout_list_enter)
+
+        if (savedInstanceState == null) {
+            ObjectAnimator.ofPropertyValuesHolder(
+                binding.fabAdd,
+                PropertyValuesHolder.ofFloat(View.SCALE_X, 0f, 1f),
+                PropertyValuesHolder.ofFloat(View.SCALE_Y, 0f, 1f)
+            ).apply {
+                duration = 450
+                startDelay = 250
+                interpolator = OvershootInterpolator()
+                start()
+            }
+        }
+
         binding.fabAdd.setOnClickListener { openEditor(-1) }
         binding.actionPin.setOnClickListener { viewModel.togglePinSelected() }
         binding.actionDelete.setOnClickListener { deleteSelected() }
@@ -115,18 +136,34 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     viewModel.notes.collect { list ->
                         if (list == null) return@collect
-                        adapter.submitList(list)
+                        adapter.submitList(list) {
+                            if (!listEntered && list.isNotEmpty()) {
+                                listEntered = true
+                                binding.rvNotes.scheduleLayoutAnimation()
+                            }
+                        }
                         binding.tvEmpty.setText(
                             if (viewModel.query.value.isBlank()) R.string.empty_notes
                             else R.string.empty_search
                         )
-                        binding.emptyState.visibility =
-                            if (list.isEmpty()) View.VISIBLE else View.GONE
+                        showEmptyState(list.isEmpty())
                     }
                 }
                 launch { viewModel.selected.collect { renderSelection(it) } }
                 launch { viewModel.searching.collect { renderHeader() } }
             }
+        }
+    }
+
+    private fun showEmptyState(show: Boolean) {
+        val view = binding.emptyState
+        if (show && view.visibility != View.VISIBLE) {
+            view.alpha = 0f
+            view.visibility = View.VISIBLE
+            view.animate().alpha(1f).setDuration(350).start()
+        } else if (!show) {
+            view.animate().cancel()
+            view.visibility = View.GONE
         }
     }
 
