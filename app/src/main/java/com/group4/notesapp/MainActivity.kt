@@ -1,17 +1,25 @@
 package com.group4.notesapp
 
 import android.os.Bundle
+import android.view.View
 import android.widget.FrameLayout
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.group4.notesapp.databinding.ActivityMainBinding
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private val viewModel: NotesViewModel by viewModels()
+    private val adapter = NoteAdapter(onClick = {}, onLongClick = {})
 
     override fun onCreate(savedInstanceState: Bundle?) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
@@ -41,6 +49,19 @@ class MainActivity : AppCompatActivity() {
             binding.fabAdd.requestLayout()
             binding.actionBar.requestLayout()
             insets
+        }
+
+        binding.rvNotes.adapter = adapter
+        binding.fabAdd.setOnClickListener { viewModel.addSample() }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.notes.collect { list ->
+                    if (list == null) return@collect
+                    adapter.submitList(list)
+                    binding.emptyState.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+                }
+            }
         }
     }
 
