@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">NotesApp</string>
+    <string name="title_notes">Notes</string>
+    <string name="hint_search">Search notes</string>
+    <string name="action_pin">Pin</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_share">Share</string>
+    <string name="empty_notes">No notes yet. Tap + to add one.</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_new_note">Create note</string>
 </resources>
