@@ -8,4 +8,11 @@
     <string name="empty_notes">No notes yet. Tap + to add one.</string>
     <string name="cd_search">Search</string>
     <string name="cd_new_note">Create note</string>
+    <string name="selected_count">%1$d selected</string>
+    <string name="action_unpin">Unpin</string>
+    <string name="action_undo">Undo</string>
+    <string name="note_deleted">Note deleted</string>
+    <string name="notes_deleted">%1$d notes deleted</string>
+    <string name="cd_clear_selection">Clear selection</string>
+    <string name="share_chooser">Share note</string>
 </resources>

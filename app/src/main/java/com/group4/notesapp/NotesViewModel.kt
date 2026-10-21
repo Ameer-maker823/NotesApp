@@ -25,8 +25,42 @@ class NotesViewModel(app: Application) : AndroidViewModel(app) {
         .flatMapLatest { dao.searchNotes(it.trim()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    private val _selected = MutableStateFlow<Set<Int>>(emptySet())
+    val selected: StateFlow<Set<Int>> = _selected
+
     fun setQuery(text: String) {
         query.value = text
+    }
+
+    fun toggleSelection(id: Int) {
+        val current = _selected.value
+        _selected.value = if (id in current) current - id else current + id
+    }
+
+    fun clearSelection() {
+        _selected.value = emptySet()
+    }
+
+    fun selectedNotes(): List<Note> =
+        notes.value.orEmpty().filter { it.id in _selected.value }
+
+    fun togglePinSelected() {
+        val chosen = selectedNotes()
+        if (chosen.isEmpty()) return
+        val allPinned = chosen.all { it.pinned }
+        viewModelScope.launch { dao.setPinned(chosen.map { it.id }, !allPinned) }
+        clearSelection()
+    }
+
+    fun deleteSelected(): List<Note> {
+        val chosen = selectedNotes()
+        if (chosen.isNotEmpty()) viewModelScope.launch { dao.delete(chosen) }
+        clearSelection()
+        return chosen
+    }
+
+    fun restore(deleted: List<Note>) {
+        viewModelScope.launch { dao.insertAll(deleted) }
     }
 
     // Temporary: lets us test the list before the editor exists.
