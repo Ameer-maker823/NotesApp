@@ -62,21 +62,4 @@ class NotesViewModel(app: Application) : AndroidViewModel(app) {
     fun restore(deleted: List<Note>) {
         viewModelScope.launch { dao.insertAll(deleted) }
     }
-
-    // Temporary: lets us test the list before the editor exists.
-    fun addSample() {
-        viewModelScope.launch {
-            val colors = listOf(
-                R.color.note_teal, R.color.note_salmon, R.color.note_pink,
-                R.color.note_peach, R.color.note_purple
-            ).map { ContextCompat.getColor(getApplication(), it) }
-            dao.insert(
-                Note(
-                    title = "Sample note",
-                    content = "Book the train to Kandy, pack the camera, and check the weather.",
-                    color = colors.random()
-                )
-            )
-        }
-    }
 }

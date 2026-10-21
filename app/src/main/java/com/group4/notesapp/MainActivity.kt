@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.rvNotes.adapter = adapter
-        binding.fabAdd.setOnClickListener { viewModel.addSample() }
+        binding.fabAdd.setOnClickListener { openEditor(-1) }
         binding.btnSearch.setOnClickListener {
             if (viewModel.selected.value.isNotEmpty()) viewModel.clearSelection()
         }
@@ -97,7 +97,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onNoteClick(note: Note) {
-        if (viewModel.selected.value.isNotEmpty()) viewModel.toggleSelection(note.id)
+        if (viewModel.selected.value.isNotEmpty()) {
+            viewModel.toggleSelection(note.id)
+        } else {
+            openEditor(note.id)
+        }
+    }
+
+    private fun openEditor(id: Int) {
+        startActivity(
+            Intent(this, EditNoteActivity::class.java).putExtra(EditNoteActivity.EXTRA_NOTE_ID, id)
+        )
     }
 
     private fun onNoteLongClick(note: Note) {

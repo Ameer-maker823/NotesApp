@@ -15,4 +15,9 @@
     <string name="notes_deleted">%1$d notes deleted</string>
     <string name="cd_clear_selection">Clear selection</string>
     <string name="share_chooser">Share note</string>
+    <string name="hint_title">Title</string>
+    <string name="hint_content">Start typing...</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_done">Save note</string>
+    <string name="cd_color">Note color</string>
 </resources>
