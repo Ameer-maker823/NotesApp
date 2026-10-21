@@ -44,6 +44,10 @@ Built as **Task 4** of the Auspify Technologies Android Developer Internship.
 |---|---|
 | ![Editor](Screenshots/07_editor.jpg) | ![Undo](Screenshots/08_undo.jpg) |
 
+## Demo Video
+
+[Watch the demo](Demo/notes_demo.mp4)
+
 ## How to Run
 
 1. Clone the repository
