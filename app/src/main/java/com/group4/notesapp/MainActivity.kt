@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
@@ -13,7 +14,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -32,10 +35,15 @@ class MainActivity : AppCompatActivity() {
     )
 
     private var selectionShown: Boolean? = null
+    private var searchShown: Boolean? = null
 
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
-            viewModel.clearSelection()
+            if (viewModel.selected.value.isNotEmpty()) {
+                viewModel.clearSelection()
+            } else {
+                viewModel.setSearching(false)
+            }
         }
     }
 
@@ -72,12 +80,35 @@ class MainActivity : AppCompatActivity() {
 
         binding.rvNotes.adapter = adapter
         binding.fabAdd.setOnClickListener { openEditor(-1) }
-        binding.btnSearch.setOnClickListener {
-            if (viewModel.selected.value.isNotEmpty()) viewModel.clearSelection()
-        }
         binding.actionPin.setOnClickListener { viewModel.togglePinSelected() }
         binding.actionDelete.setOnClickListener { deleteSelected() }
         binding.actionShare.setOnClickListener { shareSelected() }
+
+        binding.btnSearch.setOnClickListener {
+            when {
+                viewModel.selected.value.isNotEmpty() -> viewModel.clearSelection()
+                viewModel.searching.value -> viewModel.setSearching(false)
+                else -> {
+                    viewModel.setSearching(true)
+                    binding.etSearch.post {
+                        binding.etSearch.requestFocus()
+                        WindowCompat.getInsetsController(window, binding.etSearch)
+                            .show(WindowInsetsCompat.Type.ime())
+                    }
+                }
+            }
+        }
+
+        binding.etSearch.setText(viewModel.query.value)
+        binding.etSearch.doAfterTextChanged { viewModel.setQuery(it?.toString().orEmpty()) }
+        binding.etSearch.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                hideKeyboard()
+                true
+            } else {
+                false
+            }
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -85,13 +116,16 @@ class MainActivity : AppCompatActivity() {
                     viewModel.notes.collect { list ->
                         if (list == null) return@collect
                         adapter.submitList(list)
+                        binding.tvEmpty.setText(
+                            if (viewModel.query.value.isBlank()) R.string.empty_notes
+                            else R.string.empty_search
+                        )
                         binding.emptyState.visibility =
                             if (list.isEmpty()) View.VISIBLE else View.GONE
                     }
                 }
-                launch {
-                    viewModel.selected.collect { renderSelection(it) }
-                }
+                launch { viewModel.selected.collect { renderSelection(it) } }
+                launch { viewModel.searching.collect { renderHeader() } }
             }
         }
     }
@@ -104,27 +138,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun onNoteLongClick(note: Note) {
+        binding.root.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        viewModel.toggleSelection(note.id)
+    }
+
     private fun openEditor(id: Int) {
         startActivity(
             Intent(this, EditNoteActivity::class.java).putExtra(EditNoteActivity.EXTRA_NOTE_ID, id)
         )
     }
 
-    private fun onNoteLongClick(note: Note) {
-        binding.root.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        viewModel.toggleSelection(note.id)
-    }
-
     private fun renderSelection(ids: Set<Int>) {
         val active = ids.isNotEmpty()
         adapter.selectedIds = ids
-        backCallback.isEnabled = active
-
-        binding.tvTitle.text =
-            if (active) getString(R.string.selected_count, ids.size) else getString(R.string.title_notes)
-        binding.btnSearch.setImageResource(if (active) R.drawable.ic_close else R.drawable.ic_search)
-        binding.btnSearch.contentDescription =
-            getString(if (active) R.string.cd_clear_selection else R.string.cd_search)
 
         val chosen = viewModel.selectedNotes()
         val allPinned = chosen.isNotEmpty() && chosen.all { it.pinned }
@@ -136,6 +163,68 @@ class MainActivity : AppCompatActivity() {
             setShown(binding.fabAdd, !active, animate, 0f)
         }
         selectionShown = active
+        renderHeader()
+    }
+
+    private fun renderHeader() {
+        val ids = viewModel.selected.value
+        val selecting = ids.isNotEmpty()
+        val searching = viewModel.searching.value
+        val showField = searching && !selecting
+
+        binding.tvTitle.text =
+            if (selecting) getString(R.string.selected_count, ids.size)
+            else getString(R.string.title_notes)
+        binding.tvTitle.visibility = if (showField) View.GONE else View.VISIBLE
+
+        binding.btnSearch.setImageResource(
+            if (selecting || searching) R.drawable.ic_close else R.drawable.ic_search
+        )
+        binding.btnSearch.contentDescription = getString(
+            when {
+                selecting -> R.string.cd_clear_selection
+                searching -> R.string.cd_close_search
+                else -> R.string.cd_search
+            }
+        )
+        backCallback.isEnabled = selecting || searching
+        setSearchField(showField, searching)
+    }
+
+    private fun setSearchField(show: Boolean, searching: Boolean) {
+        if (!searching && binding.etSearch.text.isNotEmpty()) binding.etSearch.setText("")
+        if (searchShown == show) return
+        val animate = searchShown != null
+        searchShown = show
+        val field = binding.etSearch
+        field.animate().cancel()
+
+        if (show) {
+            field.visibility = View.VISIBLE
+            if (animate) {
+                field.alpha = 0f
+                field.translationX = dp(24).toFloat()
+                field.animate().alpha(1f).translationX(0f).setDuration(250).start()
+            } else {
+                field.alpha = 1f
+                field.translationX = 0f
+            }
+        } else {
+            hideKeyboard()
+            if (animate) {
+                field.animate().alpha(0f).setDuration(150)
+                    .withEndAction { field.visibility = View.GONE }
+                    .start()
+            } else {
+                field.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun hideKeyboard() {
+        WindowCompat.getInsetsController(window, binding.etSearch)
+            .hide(WindowInsetsCompat.Type.ime())
+        binding.etSearch.clearFocus()
     }
 
     private fun setShown(view: View, shown: Boolean, animate: Boolean, offset: Float) {

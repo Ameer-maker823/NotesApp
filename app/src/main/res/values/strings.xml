@@ -20,4 +20,6 @@
     <string name="cd_back">Back</string>
     <string name="cd_done">Save note</string>
     <string name="cd_color">Note color</string>
+    <string name="empty_search">No notes match your search.</string>
+    <string name="cd_close_search">Close search</string>
 </resources>

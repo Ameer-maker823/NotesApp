@@ -1,7 +1,6 @@
 package com.group4.notesapp
 
 import android.app.Application
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.group4.notesapp.data.AppDatabase
@@ -18,10 +17,14 @@ class NotesViewModel(app: Application) : AndroidViewModel(app) {
 
     private val dao = AppDatabase.getInstance(app).noteDao()
 
-    private val query = MutableStateFlow("")
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query
+
+    private val _searching = MutableStateFlow(false)
+    val searching: StateFlow<Boolean> = _searching
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val notes: StateFlow<List<Note>?> = query
+    val notes: StateFlow<List<Note>?> = _query
         .flatMapLatest { dao.searchNotes(it.trim()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -29,7 +32,12 @@ class NotesViewModel(app: Application) : AndroidViewModel(app) {
     val selected: StateFlow<Set<Int>> = _selected
 
     fun setQuery(text: String) {
-        query.value = text
+        _query.value = text
+    }
+
+    fun setSearching(open: Boolean) {
+        _searching.value = open
+        if (!open) _query.value = ""
     }
 
     fun toggleSelection(id: Int) {
